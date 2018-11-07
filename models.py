@@ -215,7 +215,7 @@ class LSTMModel(object):
         with tf.variable_scope('loss'):
             logits = tf.reshape(self.logits, [-1, self.target_size])
             targets = tf.reshape(self.targets, [-1, self.target_size])
-            cross_entropies = tf.nn.softmax_cross_entropy_with_logits(logits=logits,
+            cross_entropies = tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits,
                                                                       labels=targets)
             self._loss = tf.reduce_mean(cross_entropies, name='loss')
 
