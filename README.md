@@ -38,7 +38,7 @@ This code is intended to be run with Python 2.7. You'll also need
 - NumPy. `pip install numpy`
 - matplotlib. `pip install matplotlib`
 - TensorFlow. [https://www.tensorflow.org/](https://www.tensorflow.org/).
-You'll need 0.8 or newer (which provides `tf.scan`).
+You'll need 1.12 or newer (which provides `tf.scan`).
 
 ### Obtaining the Data
 
@@ -203,3 +203,7 @@ fewer dependencies (IPython and Jupyter are no longer required). The
 refactored code was tested by reproducing the results in the paper. If you
 prefer the old version, containing Jupyter notebooks instead of Python files,
 then run `git checkout notebooks` after cloning the repository.
+
+### 7/11/2018: Code Refactored
+
+The code has been refactored to be compatible with tensorflow 1.12.
