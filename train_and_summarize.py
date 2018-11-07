@@ -150,25 +150,29 @@ def train(sess, model, optimizer, log_dir, batch_size, num_sweeps_per_summary,
     ema = tf.train.ExponentialMovingAverage(decay=0.5)
     update_train_loss_ema = ema.apply([model.loss])
     train_loss_ema = ema.average(model.loss)
-    tf.scalar_summary('train_loss_ema', train_loss_ema)
+    tf.summary.scalar('train_loss_ema', train_loss_ema)
 
     train_accuracy = tf.placeholder(tf.float32, name='train_accuracy')
     train_edit_dist = tf.placeholder(tf.float32, name='train_edit_dist')
     test_accuracy = tf.placeholder(tf.float32, name='test_accuracy')
     test_edit_dist = tf.placeholder(tf.float32, name='test_edit_dist')
-    values = [train_accuracy, train_edit_dist, test_accuracy, test_edit_dist]
-    tags = [value.op.name for value in values]
-    tf.scalar_summary('learning_rate', optimizer.learning_rate)
-    tf.scalar_summary(tags, tf.pack(values))
+    #values = [train_accuracy, train_edit_dist, test_accuracy, test_edit_dist]
+    #tags = [value.op.name for value in values]
 
-    summary_op = tf.merge_all_summaries()
+    tf.summary.scalar('learning_rate', optimizer.learning_rate)
+    for value in [train_accuracy, train_edit_dist, test_accuracy, test_edit_dist]:
+        tf.summary.scalar(value.op.name, value)
+
+    #tf.summary.scalar(tags, tf.stack(values))
+
+    summary_op = tf.summary.merge_all()
 
     if os.path.exists(log_dir):
         shutil.rmtree(log_dir)
-    summary_writer = tf.train.SummaryWriter(logdir=log_dir, graph=sess.graph)
+    summary_writer = tf.summary.FileWriter(logdir=log_dir, graph=sess.graph)
     saver = tf.train.Saver()
 
-    sess.run(tf.initialize_all_variables())
+    sess.run(tf.global_variables_initializer())
 
     num_sweeps_visited = 0
     start_time = time.time()
