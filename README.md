@@ -1,11 +1,10 @@
 # Recognizing Surgical Activities with Recurrent Neural Networks
 
-This is the accompanying code for R. DiPietro, C. Lea, A. Malpani,
-N. Ahmidi, S.S. Vedula, G.I. Lee, M.R. Lee, G.D. Hager: Recognizing Surgical
-Activities with Recurrent Neural Networks. Medical Image Computing
-and Computer Assisted Intervention (MICCAI), 2016.
+This is a TensorFlow 1.12 compatible version of the code for R. DiPietro, C. Lea, A. Malpani, N. Ahmidi, S.S. Vedula, G.I. Lee, M.R. Lee, G.D. Hager: Recognizing Surgical Activities with Recurrent Neural Networks. Medical Image Computing and Computer Assisted Intervention (MICCAI), 2016.
 
-[http://arxiv.org/abs/1606.06329](http://arxiv.org/abs/1606.06329)
+http://arxiv.org/abs/1606.06329
+
+The original code can be found here: https://github.com/rdipietro/miccai-2016-surgical-activity-rec
 
 ## Overview
 
