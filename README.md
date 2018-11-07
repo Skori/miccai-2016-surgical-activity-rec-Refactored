@@ -206,4 +206,4 @@ then run `git checkout notebooks` after cloning the repository.
 
 ### 7/11/2018: Code Refactored
 
-The code has been refactors to be compatible with tensorflow 1.12.
+The code has been refactored to be compatible with tensorflow 1.12.
