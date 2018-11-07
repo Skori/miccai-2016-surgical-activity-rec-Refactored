@@ -41,7 +41,7 @@ class LSTM(object):
         self.dropout_keep_prob = dropout_keep_prob
         self.input_size = inputs.get_shape().as_list()[2]
 
-        batch_states_shape = tf.pack([tf.shape(inputs)[0],
+        batch_states_shape = tf.stack([tf.shape(inputs)[0],
                                       2*self.hidden_layer_size])
         self._batch_start_states = tf.zeros(batch_states_shape,
                                             dtype=tf.float32)
@@ -70,8 +70,8 @@ class LSTM(object):
                     return self._lstm_block(c_prev_and_m_prev, x_and_r,
                                             block_input_size)
 
-                x_and_r = tf.concat(2, [prev_layer_outputs,
-                                        tf.cast(resets, tf.float32)])
+                x_and_r = tf.concat([prev_layer_outputs,
+                                        tf.cast(resets, tf.float32)], 2)
                 with tf.variable_scope('layer%d' % layer):
                     c_and_m = tf.scan(fixed_size_lstm_block, x_and_r,
                                       initializer=self._batch_start_states)
@@ -79,8 +79,8 @@ class LSTM(object):
                 prev_layer_outputs = tf.nn.dropout(
                     c_and_m[:, :, self.hidden_layer_size:], keep_prob)
 
-            _states = tf.concat(2, [tf.expand_dims(states, 2)
-                                    for states in states_list])
+            _states = tf.concat([tf.expand_dims(states, 2)
+                                    for states in states_list], 2)
 
             # Now put the batch, time axes back.
             self._states = tf.transpose(_states, [1, 0, 2, 3])
@@ -132,10 +132,10 @@ class LSTM(object):
 
         # If r[i] is True, revert back to initial states. Otherwise, keep
         # the states from the previous time step.
-        c_prev_and_m_prev = tf.select(r,
+        c_prev_and_m_prev = tf.where(r,
                                       self._batch_start_states,
                                       c_prev_and_m_prev)
-        c_prev, m_prev = tf.split(1, 2, c_prev_and_m_prev)
+        c_prev, m_prev = tf.split(c_prev_and_m_prev, 2, 1)
 
         x_tilde = tf.tanh( xmul(x, 'W_xx') +
                            mmul(m_prev, 'W_xm') + bias('b_x') )
@@ -148,7 +148,7 @@ class LSTM(object):
                         diagcmul(c, 'w_oc') + bias('b_o') )
         m = o*tf.tanh(c)
 
-        c_and_m = tf.concat(1, [c, m])
+        c_and_m = tf.concat([c, m], 1)
         return c_and_m
 
     @property
@@ -208,15 +208,15 @@ class LSTMModel(object):
             b = tf.get_variable('b', shape=[self.target_size])
             outputs_matrix = tf.reshape(outputs, [-1, output_size])
             logits = tf.nn.xw_plus_b(outputs_matrix, W, b)
-            batch_size, duration, _ = tf.unpack(tf.shape(self.inputs))
-            logits_shape = tf.pack([batch_size, duration, self.target_size])
+            batch_size, duration, _ = tf.unstack(tf.shape(self.inputs))
+            logits_shape = tf.stack([batch_size, duration, self.target_size])
             self._logits = tf.reshape(logits, logits_shape, name='logits')
 
         with tf.variable_scope('loss'):
             logits = tf.reshape(self.logits, [-1, self.target_size])
             targets = tf.reshape(self.targets, [-1, self.target_size])
-            cross_entropies = tf.nn.softmax_cross_entropy_with_logits(logits,
-                                                                      targets)
+            cross_entropies = tf.nn.softmax_cross_entropy_with_logits(logits=logits,
+                                                                      labels=targets)
             self._loss = tf.reduce_mean(cross_entropies, name='loss')
 
     def _compute_rnn_outputs(self):
@@ -306,12 +306,12 @@ class ReverseLSTMModel(LSTMModel):
         super(ReverseLSTMModel, self).__init__(*args)
 
     def _compute_rnn_outputs(self):
-        reversed_inputs = tf.reverse(self.inputs, [False, True, False])
-        reversed_resets = tf.reverse(self.resets, [False, True, False])
+        reversed_inputs = tf.reverse(self.inputs, [1])
+        reversed_resets = tf.reverse(self.resets, [1])
         self._rv_lstm = LSTM(reversed_inputs, reversed_resets, self.training,
                              self.num_layers, self.hidden_layer_size,
                              self.init_scale, self.dropout_keep_prob)
-        outputs = tf.reverse(self._rv_lstm.outputs, [False, True, False])
+        outputs = tf.reverse(self._rv_lstm.outputs, [1])
         return outputs
 
     def _compute_rnn_output_size(self):
@@ -330,8 +330,8 @@ class BidirectionalLSTMModel(LSTMModel):
 
     def _compute_rnn_outputs(self):
 
-        reversed_inputs = tf.reverse(self.inputs, [False, True, False])
-        reversed_resets = tf.reverse(self.resets, [False, True, False])
+        reversed_inputs = tf.reverse(self.inputs, [1])
+        reversed_resets = tf.reverse(self.resets, [1])
         with tf.variable_scope('fw'):
             self._fw_lstm = LSTM(self.inputs, self.resets, self.training,
                                  self.num_layers, self.hidden_layer_size,
@@ -343,8 +343,8 @@ class BidirectionalLSTMModel(LSTMModel):
                                  self.dropout_keep_prob)
 
         fw_outputs = self._fw_lstm.outputs
-        rv_outputs = tf.reverse(self._rv_lstm.outputs, [False, True, False])
-        outputs = tf.concat(2, [fw_outputs, rv_outputs])
+        rv_outputs = tf.reverse(self._rv_lstm.outputs, [1])
+        outputs = tf.concat([fw_outputs, rv_outputs], 2)
         return outputs
 
     def _compute_rnn_output_size(self):
